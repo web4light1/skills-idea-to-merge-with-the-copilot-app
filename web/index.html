@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="la">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Translation Layer — Bifrost Gate</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: #07090E;
+            color: #e8e6e3;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* === SPLASH SCREEN === */
+        #splash {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: opacity 0.8s ease;
+        }
+
+        #splash.hidden { opacity: 0; pointer-events: none; }
+
+        .splash-title {
+            font-size: clamp(1.4rem, 4vw, 2.8rem);
+            font-weight: 300;
+            letter-spacing: 0.08em;
+            text-align: center;
+            margin-bottom: 0.5em;
+            opacity: 0.9;
+        }
+
+        .splash-subtitle {
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            margin-bottom: 2em;
+        }
+
+        .splash-motto {
+            margin: 1.5em 0;
+            text-align: center;
+        }
+
+        .splash-motto .latin {
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 0.3em;
+        }
+
+        .splash-motto .english {
+            font-size: clamp(0.75rem, 1.5vw, 0.95rem);
+            color: #666;
+            display: block;
+        }
+
+        /* === LANGUAGE SELECTOR === */
+        #lang-selector {
+            margin-top: 2em;
+            text-align: center;
+        }
+
+        #lang-selector label {
+            display: block;
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 0.8em;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        #lang-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5em;
+            max-width: 600px;
+        }
+
+        .lang-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+            padding: 0.6em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.6rem;
+            transition: all 0.3s ease;
+            line-height: 1;
+            width: 3em;
+            height: 3em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lang-btn:hover {
+            border-color: rgba(110, 68, 255, 0.5);
+            background: rgba(110, 68, 255, 0.08);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(110, 68, 255, 0.2);
+        }
+
+        /* === BIFROST TUNNEL === */
+        #bifrost {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            perspective: 800px;
+        }
+
+        #bifrost.active { display: flex; }
+
+        .tunnel {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center,
+                transparent 0%,
+                rgba(110, 68, 255, 0.05) 20%,
+                rgba(0, 212, 255, 0.08) 40%,
+                rgba(110, 68, 255, 0.12) 60%,
+                rgba(255, 184, 0, 0.05) 80%,
+                #07090E 100%
+            );
+            animation: tunnelPulse 0.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes tunnelPulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.02); }
+        }
+
+        .tunnel-rings {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid;
+            animation: ringFly 2s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes ringFly {
+            0% { transform: scale(0.01) translateZ(-500px); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.3; }
+            100% { transform: scale(3) translateZ(200px); opacity: 0; }
+        }
+
+        .morph-text {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            color: #fff;
+            text-shadow: 0 0 20px rgba(110, 68, 255, 0.8);
+            max-width: 80%;
+            line-height: 1.8;
+        }
+
+        .morph-text .line {
+            display: block;
+            margin: 0.5em 0;
+            transition: opacity 0.3s;
+        }
+
+        /* === MIDGARD (POST-LANDING) === */
+        #midgard {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        #midgard.active { display: flex; opacity: 1; }
+
+        .midgard-title {
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5em;
+        }
+
+        .midgard-subtitle {
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            color: #888;
+            margin-bottom: 2em;
+        }
+
+        .midgard-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1em;
+            justify-content: center;
+        }
+
+        .midgard-link {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 1em 1.5em;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+            color: #ccc;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+
+        .midgard-link:hover {
+            border-color: rgba(0, 212, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+            color: #fff;
+        }
+
+        .midgard-link .icon { font-size: 1.5em; display: block; margin-bottom: 0.3em; }
+        .midgard-link .name { font-size: 0.9em; font-weight: 500; }
+
+        .footer {
+            position: absolute;
+            bottom: 1.5em;
+            font-size: 0.75rem;
+            color: #444;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <!-- SPLASH: Latin landing -->
+    <div id="splash">
+        <div class="splash-motto">
+            <span class="latin" data-key="motto1">Loquere lingua tua.</span>
+            <span class="english">Speak your language.</span>
+        </div>
+        <div class="splash-motto">
+            <span class="latin" data-key="motto2">Omnes te audient sua lingua.</span>
+            <span class="english">Everyone hears you in theirs.</span>
+        </div>
+        <div class="splash-motto">
+            <span class="latin" data-key="motto3">Tua voce.</span>
+            <span class="english">In your voice.</span>
+        </div>
+
+        <div id="lang-selector">
+            <label>Elige linguam tuam — Choose your language</label>
+            <div id="lang-grid"></div>
+        </div>
+
+        <div class="footer">Mundus Novus · Web 4.23 · Standard 700</div>
+    </div>
+
+    <!-- BIFROST TUNNEL -->
+    <div id="bifrost">
+        <div class="tunnel"></div>
+        <div class="tunnel-rings" id="rings-container"></div>
+        <div class="morph-text" id="morph-text">
+            <span class="line" data-key="motto1">Loquere lingua tua.</span>
+            <span class="line" data-key="motto2">Omnes te audient sua lingua.</span>
+            <span class="line" data-key="motto3">Tua voce.</span>
+        </div>
+    </div>
+
+    <!-- MIDGARD: Post-landing dashboard entry -->
+    <div id="midgard">
+        <div class="midgard-title" id="midgard-title"></div>
+        <div class="midgard-subtitle" id="midgard-subtitle"></div>
+        <div class="midgard-links" id="midgard-links"></div>
+        <div class="footer">Universal Translation Layer · Rebirth Phoenix Foundation</div>
+    </div>
+
+    <script src="bifrost.js"></script>
+</body>
+</html>
